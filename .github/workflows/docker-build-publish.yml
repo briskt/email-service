@@ -34,7 +34,7 @@ jobs:
 
   build-and-publish:
     name: Build and Publish
-    needs: test
+    needs: [unit-tests,api-tests,psr2-check]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
