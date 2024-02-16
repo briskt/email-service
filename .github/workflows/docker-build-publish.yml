@@ -1,0 +1,29 @@
+name: Test
+
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      docker:
+        image: docker:stable
+        options: --privileged
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run unit tests
+        run: |
+          docker-compose -f codeship-services.yml run --rm app ./run-tests.sh
+
+      - name: Run API tests
+        run: |
+          docker-compose -f codeship-services.yml run --rm app ./run-tests-api.sh
+
+      - name: Check PSR2
+        run: |
+          docker-compose -f codeship-services.yml run --rm app ./check-psr2.sh
