@@ -1,0 +1,125 @@
+#%RAML 1.0
+title: Email Service API
+protocols: [ HTTPS ]
+mediaType: application/json
+securitySchemes:
+  AuthzBearerToken:
+      type: x-custom
+      describedBy:
+        headers:
+          Authorization:
+            example: Bearer abc123
+securedBy: [ AuthzBearerToken ]
+
+types:
+  EmailAddress: !include https://github.com/raml-org/raml-examples/blob/master/fragments/datatype/general/Email.dataType.raml
+
+  NewEmailRequest:
+    to_address: EmailAddress
+    cc_address?: EmailAddress
+    bcc_address?: EmailAddress
+    subject:
+    text_body:
+      requiredIfNot: [html_body]
+    html_body:
+      requiredIfNot: [text_body]
+    send_after?:
+      type: integer
+      description: send the message after this time (Unix epoch, UTC)
+      collidesWith: [delay_seconds]
+    delay_seconds?:
+      type: integer
+      description: number of seconds to delay sending
+      collidesWith: [send_after]
+
+  NewEmailCreated:
+    id: integer
+    to_address: EmailAddress
+    cc_address?: EmailAddress
+    bcc_address?: EmailAddress
+    subject:
+    text_body:
+      requiredIfNot: [html_body]
+    html_body:
+      requiredIfNot: [text_body]
+    attempts_count: integer
+    updated_at:
+      type: integer
+      description: UTC epoch
+    created_at:
+      type: integer
+      description: UTC epoch
+    error:
+    send_after:
+      type: integer
+      description: message will be sent after this time (Unix epoch, UTC)
+
+  Error:
+    name:
+    message:
+    code: integer
+    status: integer
+    type?:
+
+/email:
+  post:
+    description: Queues an email for later sending
+    body:
+      type: NewEmailRequest
+      example: |
+        {
+          "to_address": "to@example.org",
+          "subject": "Text only",
+          "text_body": "Email content"
+        }
+      example: |
+        {
+          "to_address": "to@example.org",
+          "subject": "HTML only",
+          "html_body": "<p>Email content</p>"
+          "send_after": 1556312556
+        }
+      example: |
+        {
+          "to_address": "to@example.org",
+          "subject": "HTML and text",
+          "text_body": "Email content",
+          "html_body": "<p>Email content</p>"
+          "delay_seconds": 3600
+        }
+    responses:
+      200:
+        body: NewEmailCreated
+      401:
+        description: The request was either missing the Authorization header or used an invalid token
+        body:
+          type: Error
+          example: |
+            {
+              "name": "Unauthorized",
+              "message": "Your request was made with invalid credentials.",
+              "code": 0,
+              "status": 401
+            }
+      422:
+        description: The request data does not satisfy some validation rule.
+        body:
+          type: Error
+          example: |
+            {
+              "name": "Unprocessable entity",
+              "message": "To Address cannot be blank.",
+              "code": 0,
+              "status": 422
+            }
+      500:
+        description: A server-side error occurred.
+        body:
+          type: Error
+          example: |
+            {
+              "name": "Internal Server Error",
+              "message": "Some error message.",
+              "code": 0,
+              "status": 500
+            }

@@ -1,0 +1,62 @@
+version: '2'
+services:
+    data:
+        image: silintl/data-volume:latest
+        volumes:
+            - ./application:/data
+
+    db:
+        image: mariadb:10
+        ports:
+            - "3306"
+        env_file:
+            - ./local.env
+
+    app:
+        build: ./
+        volumes_from:
+            - data
+        ports:
+            - "8888:80"
+        depends_on:
+            - db
+        environment:
+            APP_NAME: email-service
+            MYSQL_HOST: db
+            MYSQL_DATABASE: email
+            MYSQL_USER: email
+            MYSQL_PASSWORD: email
+        env_file:
+            - ./local.env
+
+    cron:
+        build: ./
+        volumes_from:
+            - data
+        depends_on:
+            - db
+        env_file:
+            - ./local.env
+        command: /data/run-cron.sh
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin:5
+        ports:
+            - "8001:80"
+        environment:
+            PMA_HOST: db
+            PMA_USER: email  # these should be the same as in your local.env
+            PMA_PASSWORD: email
+
+    cli:
+        build: ./
+        volumes:
+            - ${COMPOSER_CACHE_DIR}:/composer
+        volumes_from:
+            - data
+        working_dir: /data
+        environment:
+            COMPOSER_CACHE_DIR: /composer
+        env_file:
+            - ./local.env
+        command: ["true"]

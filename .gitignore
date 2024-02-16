@@ -1,0 +1,18 @@
+# Vagrant folder
+.vagrant/
+
+# phpstorm project files
+.idea/
+/nbproject/
+# local config files
+local.env
+
+# Git auth. token (to get past rate limiting for composer).
+auth.json
+
+vendor/
+*.aes
+dockercfg
+application/frontend/runtime
+
+.php-cs-fixer.cache
